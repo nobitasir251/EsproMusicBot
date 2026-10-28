@@ -1,19 +1,19 @@
-
-FROM nikolaik/python-nodejs:python3.10-nodejs19-bullseye
-
-ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+FROM python:3.10-slim-bullseye
 
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends \
+        ffmpeg \
+        git \
+        curl \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
 
-RUN pip3 install --upgrade pip \
-    && pip3 install -r requirements.txt
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
