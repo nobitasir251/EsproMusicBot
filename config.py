@@ -7,8 +7,8 @@ from pyrogram import filters
 load_dotenv()
 
 # Get this value from my.telegram.org/apps
-API_ID = int(getenv("31354857"))
-API_HASH = getenv("338f8b98e04580bfc079d6c672123820")
+API_ID = int(getenv("API_ID"))
+API_HASH = getenv("API_HASH")
 API_KEY = "0122a3195bd84ac3a"
 
 
