@@ -25,3 +25,4 @@ unidecode
 yt-dlp[default]
 youtube-search
 youtube-search-python
+py-yt
