@@ -1,18 +1,14 @@
-FROM python:3.10-slim-bookworm
+FROM nikolaik/python-nodejs:python3.10-nodejs20
 
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg git \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY . /app/
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-RUN chmod +x start
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 CMD ["bash", "start"]
