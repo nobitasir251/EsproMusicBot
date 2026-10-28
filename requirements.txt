@@ -1,6 +1,6 @@
+
 aiofiles
 aiohttp
-asyncio
 beautifulsoup4
 dnspython
 ffmpeg-python
@@ -16,12 +16,12 @@ py-tgcalls==0.9.7
 pykeyboard
 pyrofork
 python-dotenv
-pyyaml
+PyYAML
 requests
 speedtest-cli
 spotipy
-tgcrypto
-unidecode
+TgCrypto
+Unidecode
 yt-dlp[default]
 youtube-search
 youtube-search-python
