@@ -8,9 +8,9 @@ from pyrogram.types import Message
 from youtubesearchpython import VideosSearch, Playlist
 import aiohttp
 
-API_URL = os.environ.get("SHRUTI_API_URL", "https://api01.shrutibots.site")
+API_URL = os.environ.get("SHRUTI_API_URL", "https://ananyaxmusic-h-2fcc6ccbfb4f.herokuapp.com")
 
-API_KEY = os.environ.get("SHRUTI_API_KEY", "ShrutiBots7EhoL3cMjnYD3VEhQDIA") ## Get This API KEY FROM TELEGRAM BOT USERNAME: @SHRUTIAPIBOT 
+API_KEY = os.environ.get("SHRUTI_API_KEY", "TeamAnanyaBotsiGONhBFmw8YXLmtnV1jW") ## Get This API KEY FROM TELEGRAM BOT USERNAME: @SHRUTIAPIBOT 
 
 DOWNLOAD_DIR = "downloads"
 
