@@ -9,7 +9,6 @@ heroku3
 httpx==0.27.2
 motor
 pillow
-psutil
 lexica-api
 py-tgcalls==0.9.7
 pykeyboard
