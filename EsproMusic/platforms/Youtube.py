@@ -1,175 +1,3 @@
-import asyncio
-import os
-import re
-from typing import Union
-import yt_dlp
-from pyrogram.enums import MessageEntityType
-from pyrogram.types import Message
-from youtubesearchpython import VideosSearch, Playlist
-import aiohttp
-
-API_URL = os.environ.get("SHRUTI_API_URL", "https://api01.shrutibots.site")
-
-API_KEY = os.environ.get("SHRUTI_API_KEY", "ShrutiBots7EhoL3cMjnYD3VEhQDIA") ## Get This API KEY FROM TELEGRAM BOT USERNAME: @SHRUTIAPIBOT 
-
-DOWNLOAD_DIR = "downloads"
-
-
-def time_to_seconds(time):
-    stringt = str(time)
-    return sum(int(x) * 60 ** i for i, x in enumerate(reversed(stringt.split(":"))))
-
-
-async def download_song(link: str) -> str:
-    video_id = link.split("v=")[-1].split("&")[0] if "v=" in link else link
-    if not video_id or len(video_id) < 3:
-        return None
-
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp3")
-    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-        return file_path
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{API_URL}/download",
-                params={"url": video_id, "type": "audio", "api_key": API_KEY},
-                timeout=aiohttp.ClientTimeout(total=300)
-            ) as resp:
-                if resp.status != 200:
-                    return None
-                with open(file_path, "wb") as f:
-                    async for chunk in resp.content.iter_chunked(131072):
-                        f.write(chunk)
-        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-            return file_path
-        return None
-    except Exception:
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception:
-                pass
-        return None
-
-
-async def download_video(link: str) -> str:
-    video_id = link.split("v=")[-1].split("&")[0] if "v=" in link else link
-    if not video_id or len(video_id) < 3:
-        return None
-
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp4")
-    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-        return file_path
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{API_URL}/download",
-                params={"url": video_id, "type": "video", "api_key": API_KEY},
-                timeout=aiohttp.ClientTimeout(total=600)
-            ) as resp:
-                if resp.status != 200:
-                    return None
-                with open(file_path, "wb") as f:
-                    async for chunk in resp.content.iter_chunked(131072):
-                        f.write(chunk)
-        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-            return file_path
-        return None
-    except Exception:
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception:
-                pass
-        return None
-
-
-class YouTubeAPI:
-    def __init__(self):
-        self.base = "https://www.youtube.com/watch?v="
-        self.regex = r"(?:youtube\.com|youtu\.be)"
-        self.status = "https://www.youtube.com/oembed?url="
-        self.listbase = "https://youtube.com/playlist?list="
-        self.reg = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
-
-    async def exists(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        return bool(re.search(self.regex, link))
-
-    async def url(self, message_1: Message) -> Union[str, None]:
-        messages = [message_1]
-        if message_1.reply_to_message:
-            messages.append(message_1.reply_to_message)
-        for message in messages:
-            if message.entities:
-                for entity in message.entities:
-                    if entity.type == MessageEntityType.URL:
-                        text = message.text or message.caption
-                        return text[entity.offset: entity.offset + entity.length]
-            elif message.caption_entities:
-                for entity in message.caption_entities:
-                    if entity.type == MessageEntityType.TEXT_LINK:
-                        return entity.url
-        return None
-
-    async def details(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        results = VideosSearch(link, limit=1)
-        for result in (await results.next())["result"]:
-            title = result["title"]
-            duration_min = result["duration"]
-            thumbnail = result["thumbnails"][0]["url"].split("?")[0]
-            vidid = result["id"]
-            duration_sec = int(time_to_seconds(duration_min)) if duration_min else 0
-        return title, duration_min, duration_sec, thumbnail, vidid
-
-    async def title(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        results = VideosSearch(link, limit=1)
-        for result in (await results.next())["result"]:
-            return result["title"]
-
-    async def duration(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        results = VideosSearch(link, limit=1)
-        for result in (await results.next())["result"]:
-            return result["duration"]
-
-    async def thumbnail(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        results = VideosSearch(link, limit=1)
-        for result in (await results.next())["result"]:
-            return result["thumbnails"][0]["url"].split("?")[0]
-
-    async def video(self, link: str, videoid: Union[bool, str] = None):
-        if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        try:
-            downloaded_file = await download_video(link)
-            if downloaded_file:
-                return 1, downloaded_file
-            return 0, "Video download failed"
-        except Exception as e:
-            return 0, f"Video download error: {e}"
 
     async def playlist(self, link, limit, user_id, videoid: Union[bool, str] = None):
         if videoid:
@@ -193,64 +21,69 @@ class YouTubeAPI:
 
     async def track(self, link: str, videoid: Union[bool, str] = None):
         if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        results = VideosSearch(link, limit=1)
-        for result in (await results.next())["result"]:
-            title = result["title"]
-            duration_min = result["duration"]
-            vidid = result["id"]
-            yturl = result["link"]
-            thumbnail = result["thumbnails"][0]["url"].split("?")[0]
-        track_details = {
-            "title": title,
-            "link": yturl,
-            "vidid": vidid,
-            "duration_min": duration_min,
-            "thumb": thumbnail,
-        }
-        return track_details, vidid
+            link = self.base + str(link)
+        link = str(link).split("&")[0]
+        try:
+            results = (await VideosSearch(link, limit=1).next()).get("result") or []
+            if not results:
+                return None, None
+            result = results[0]
+            thumbnails = result.get("thumbnails") or []
+            track_details = {
+                "title": result.get("title"),
+                "link": result.get("link") or (self.base + result.get("id", "")),
+                "vidid": result.get("id"),
+                "duration_min": result.get("duration"),
+                "thumb": thumbnails[0].get("url", "").split("?")[0] if thumbnails else None,
+            }
+            return track_details, result.get("id")
+        except Exception as exc:
+            print(f"[YouTube Search] track failed: {type(exc).__name__}: {exc}")
+            return None, None
 
     async def formats(self, link: str, videoid: Union[bool, str] = None):
         if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        ytdl_opts = {"quiet": True}
-        ydl = yt_dlp.YoutubeDL(ytdl_opts)
-        with ydl:
+            link = self.base + str(link)
+        link = str(link).split("&")[0]
+        ytdl_opts = {"quiet": True, "no_warnings": True, "noplaylist": True}
+        try:
+            with yt_dlp.YoutubeDL(ytdl_opts) as ydl:
+                info = ydl.extract_info(link, download=False)
             formats_available = []
-            r = ydl.extract_info(link, download=False)
-            for format in r["formats"]:
+            for item in (info or {}).get("formats", []):
                 try:
-                    if "dash" not in str(format["format"]).lower():
-                        formats_available.append(
-                            {
-                                "format": format["format"],
-                                "filesize": format.get("filesize"),
-                                "format_id": format["format_id"],
-                                "ext": format["ext"],
-                                "format_note": format["format_note"],
-                                "yturl": link,
-                            }
-                        )
+                    if "dash" not in str(item.get("format", "")).lower():
+                        formats_available.append({
+                            "format": item.get("format"),
+                            "filesize": item.get("filesize"),
+                            "format_id": item.get("format_id"),
+                            "ext": item.get("ext"),
+                            "format_note": item.get("format_note"),
+                            "yturl": link,
+                        })
                 except Exception:
                     continue
-        return formats_available, link
+            return formats_available, link
+        except Exception as exc:
+            print(f"[YouTube API] formats failed: {type(exc).__name__}: {exc}")
+            return [], link
 
     async def slider(self, link: str, query_type: int, videoid: Union[bool, str] = None):
         if videoid:
-            link = self.base + link
-        if "&" in link:
-            link = link.split("&")[0]
-        a = VideosSearch(link, limit=10)
-        result = (await a.next()).get("result")
-        title = result[query_type]["title"]
-        duration_min = result[query_type]["duration"]
-        vidid = result[query_type]["id"]
-        thumbnail = result[query_type]["thumbnails"][0]["url"].split("?")[0]
-        return title, duration_min, thumbnail, vidid
+            link = self.base + str(link)
+        link = str(link).split("&")[0]
+        try:
+            response = await VideosSearch(link, limit=10).next()
+            results = response.get("result") or []
+            if not isinstance(query_type, int) or query_type < 0 or query_type >= len(results):
+                return None, None, None, None
+            result = results[query_type]
+            thumbnails = result.get("thumbnails") or []
+            thumbnail = thumbnails[0].get("url", "").split("?")[0] if thumbnails else None
+            return result.get("title"), result.get("duration"), thumbnail, result.get("id")
+        except Exception as exc:
+            print(f"[YouTube Search] slider failed: {type(exc).__name__}: {exc}")
+            return None, None, None, None
 
     async def download(
         self,
@@ -264,18 +97,18 @@ class YouTubeAPI:
         title: Union[bool, str] = None,
     ) -> str:
         if videoid:
-            link = self.base + link
+            link = self.base + str(link)
         try:
-            if video:
-                downloaded_file = await download_video(link)
-            else:
-                downloaded_file = await download_song(link)
-            if downloaded_file:
+            downloaded_file = (
+                await download_video(link) if video else await download_song(link)
+            )
+            if downloaded_file and os.path.isfile(downloaded_file):
                 return downloaded_file, True
             return None, False
-        except Exception:
+        except Exception as exc:
+            print(f"[YouTube API] download method failed: {type(exc).__name__}: {exc}")
             return None, False
 
 
 YouTube = YouTubeAPI()
-                                          
+                                  
